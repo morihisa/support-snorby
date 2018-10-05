@@ -1,0 +1,75 @@
+Snorby インストール手順サンプル
+
+
+$ cd ~/snort_src/
+$ wget https://www.snort.org/downloads/community/community-rules.tar.gz
+$ tar zxvf community-rules.tar.gz 
+$ sudo cp community-rules/community.rules /etc/snort/rules/
+$ wget https://rules.emergingthreats.net/open/snort-2.9.0/emerging.rules.tar.gz
+$ tar zxvf emerging.rules.tar.gz
+$ cd rules/
+$ sudo cp reference.config /etc/snort/
+$ cat ../community-rules/sid-msg.map sid-msg.map > tmp.map
+$ sudo cp tmp.map /etc/snort/sid-msg.map 
+$ sudo cp emerging-dos.rules /etc/snort/rules/
+$ sudo cp emerging-exploit.rules /etc/snort/rules/
+$ sudo cp emerging-info.rules /etc/snort/rules/
+$ sudo cp emerging-scan.rules /etc/snort/rules/
+$ sudo cp emerging-trojan.rules /etc/snort/rules/
+$ sudo cp emerging-web_server.rules /etc/snort/rules/
+$ sudo cp emerging-web_specific_apps.rules /etc/snort/rules/
+
+$ sudo vi /etc/snort/snort.conf
+※ファイルの末尾に下記を追記する。
+include $RULE_PATH/community.rules
+include $RULE_PATH/emerging-dos.rules
+include $RULE_PATH/emerging-exploit.rules
+include $RULE_PATH/emerging-info.rules
+include $RULE_PATH/emerging-scan.rules
+include $RULE_PATH/emerging-trojan.rules
+include $RULE_PATH/emerging-web_server.rules
+include $RULE_PATH/emerging-web_specific_apps.rules
+
+$ sudo vi /etc/snort/barnyard2.conf
+※ファイルの末尾に次の1行を追記する。
+output database: log, mysql, user=snorby password=password dbname=snorby host=localhost sensor_name=honeypot1
+
+$ sudo apt install -y imagemagick libyaml-dev libxml2-dev libxslt-dev ruby ruby-dev postgresql-server-dev-9.5 libpq-dev
+
+$ sudo gem install -N wkhtmltopdf
+$ sudo gem install -N bundler
+$ sudo gem install -N rails
+$ sudo gem install -N rake --version=0.9.2
+
+$ cd ~/snort_src/
+$ git clone https://github.com/Snorby/snorby.git
+$ sudo cp -r ./snorby/ /opt/snorby/
+$ cd /opt/snorby/
+$ sudo rm Gemfile.lock
+$ sudo bundle install --path /opt/snorby/vendor/bundle
+
+$ sudo cp /opt/snorby/config/database.yml.example /opt/snorby/config/database.yml
+$ sudo vi /opt/snorby/config/database.yml
+※Enter Password Hereの部分をmysqlのrootパスワードに書き換える
+
+$ sudo cp /opt/snorby/config/snorby_config.yml.example /opt/snorby/config/snorby_config.yml
+$ sudo sed -i s/"\/usr\/local\/bin\/wkhtmltopdf"/"\/usr\/bin\/wkhtmltopdf"/g /opt/snorby/config/snorby_config.yml
+$ sudo vi /opt/snorby/config/snorby_config.yml
+※17行目あたりのrules行の次の行にルールファイルのディレクトリパスを記載する。
+  rules:
+    - "/etc/snort/rules/"
+
+$ cd /opt/snorby/
+$ sudo bundle exec rake snorby:setup
+
+$ mysql -u root -p
+myslq> create user 'snorby'@'localhost' IDENTIFIED BY 'password';
+myslq> grant all privileges on snorby.* to 'snorby'@'localhost' with grant option;
+myslq> flush privileges;
+myslq> exit;
+
+$ sudo vi /opt/snorby/config/database.yml
+※usernameとpasswordを書き換える。
+
+$ cd /opt/snorby/
+$ sudo bundle exec rails server -e production

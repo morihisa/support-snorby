@@ -1,0 +1,29 @@
+Barnyard2 インストール手順サンプル
+
+
+$ sudo apt install -y mysql-server libmysqlclient-dev mysql-client autoconf libtool
+
+$ cd ~/snort_src
+$ git clone https://github.com/firnsy/barnyard2.git
+$ cd barnyard2
+$ autoreconf -fvi -I ./m4
+$ sudo ln -s /usr/include/dumbnet.h /usr/include/dnet.h
+$ sudo ldconfig
+$ ./configure --with-mysql --with-mysql-libraries=/usr/lib/x86_64-linux-gnu
+$ make
+$ sudo make install
+
+$ cd ~/snort_src/barnyard2
+$ sudo cp etc/barnyard2.conf /etc/snort
+$ sudo mkdir /var/log/barnyard2
+$ sudo chown snort.snort /var/log/barnyard2
+$ sudo touch /var/log/snort/barnyard2.waldo
+$ sudo chown snort.snort /var/log/snort/barnyard2.waldo
+
+$ sudo vi /etc/snort/snort.conf
+※ファイルの522行目あたりに次の2行を追記する。
+
+output alert_fast: alert.log
+output unified2: filename snort.u2, limit 128
+
+$ sudo barnyard2 -c /etc/snort/barnyard2.conf -d /var/log/snort -f snort.u2 -w /var/log/snort/barnyard2.waldo -g snort -u snort
