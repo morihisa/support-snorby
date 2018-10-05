@@ -13,7 +13,7 @@
 1. barnyard2-install.txt
 1. snorby-install.txt
 
-Snorby インストール後は、 *必ずパスワードを変更* してください。
+Snorby インストール後は、***必ずパスワードを変更***してください。
 
 ## 各種ソフトウェアの起動コマンドまとめ
 - Snortの起動
